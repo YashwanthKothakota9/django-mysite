@@ -8,6 +8,7 @@ from django.views.generic import ListView
 
 from .forms import EmailPostForm
 
+from django.core.mail import send_mail
 
 def post_share(request, post_id):
     #  Retrieve post by id
@@ -16,13 +17,31 @@ def post_share(request, post_id):
         id = post_id,
         status = Post.Status.PUBLISHED
     )
+    sent = False
     if request.method == 'POST':
         # Form was submitted
         form = EmailPostForm(request.POST)
         if form.is_valid():
             # Form fields passed validation
             cd = form.cleaned_data
-            # send ...email
+            post_url = request.build_absolute_uri(
+                post.get_absolute_url()
+            )
+            subject = (
+                f"{cd['name']}({cd['email']})"
+                f"recommends you read {post.title}"
+            )
+            message = (
+                f"Read {post.title} at {post_url}\n\n"
+                f"{cd['name']}\'s comments:{cd['comments']}"
+            )
+            send_mail(
+                subject = subject,
+                message = message,
+                from_email = None,
+                recipient_list=[cd['to']]
+            )
+            sent = True
     else:
         form = EmailPostForm()
     return render(
@@ -30,7 +49,8 @@ def post_share(request, post_id):
             'blog/post/share.html',
             {
                 'post':post,
-                'form':form
+                'form':form,
+                'sent':sent
             }
     )
 
