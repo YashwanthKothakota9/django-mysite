@@ -4,6 +4,17 @@ from django.core.paginator import EmptyPage,PageNotAnInteger,Paginator
 from .models import Post
 from django.http import Http404
 
+from django.views.generic import ListView
+
+class PostListView(ListView):
+    '''
+        Alternate post list view
+    '''
+    queryset = Post.published.all()
+    context_object_name = 'posts'
+    paginate_by = 3
+    template_name = 'blog/post/list.html'
+
 def post_list(request):
     post_list = Post.published.all()
     # Pagination with 3 posts per page
